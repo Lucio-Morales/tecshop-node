@@ -1,35 +1,60 @@
 import { Request, Response } from 'express';
 import { tryLoginUser, tryRegisterUser } from '../services/auth.services';
+import { supabase } from '../lib/supabase';
 
 // REGISTRO DE USUARIO
-export const registerUser = async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
-    res.status(400).json({ message: 'Todos los campos son obligatorios.' });
-    return;
+export const signUpNewUser = async (req: Request, res: Response) => {
+  const { email, password, fullName } = req.body;
+
+  if (!email || !password || !fullName) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios: email, password y fullName.' });
   }
-  try {
-    const newUser = await tryRegisterUser({ name, email, password });
-    res.status(201).json({ success: true, message: 'Usuario registrado con exito', user: newUser });
-    return;
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-    return;
+
+  // Lógica de registro con Supabase
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName, // Se pasa como metadato al trigger de la DB
+      },
+    },
+  });
+
+  if (error) {
+    console.error('Error de registro:', error);
+    return res.status(400).json({ error: error.message });
   }
+
+  // El trigger de la DB se encarga de crear el perfil
+  res.status(201).json({
+    message: 'Usuario registrado exitosamente. Verifica tu email para la confirmación.',
+    user: data.user,
+  });
 };
 
-export const loginUser = async (req: Request, res: Response) => {
+export const signInUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    res.status(400).json({ message: 'Email y contraseña son requeridos.' });
-    return;
+    return res.status(400).json({ error: 'Faltan campos obligatorios: email y password.' });
   }
-  try {
-    const result = await tryLoginUser(email, password);
-    res.status(200).json(result); // incluirá token, user, etc.
-    return;
-  } catch (error: any) {
-    res.status(401).json({ message: error.message });
-    return;
+  // Lógica de login con Supabase
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    console.error('Error de login:', error);
+    // Es una buena práctica no especificar qué credencial es incorrecta por seguridad.
+    return res.status(401).json({ error: 'Credenciales inválidas.' });
   }
+
+  // Si el login es exitoso, Supabase devuelve un objeto de sesión
+  // que contiene el token de acceso.
+  res.status(200).json({
+    message: 'Login exitoso',
+    session: data.session,
+    user: data.user,
+  });
 };

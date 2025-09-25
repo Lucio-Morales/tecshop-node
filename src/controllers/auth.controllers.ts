@@ -4,31 +4,30 @@ import { supabase } from '../lib/supabase';
 
 // REGISTRO DE USUARIO
 export const signUpNewUser = async (req: Request, res: Response) => {
-  const { email, password, fullName } = req.body;
+  const { fullName, email, password } = req.body;
 
   if (!email || !password || !fullName) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios: email, password y fullName.' });
+    return res.status(400).json({ error: 'Missing required fields: email, password, and fullName.' });
   }
 
-  // Lógica de registro con Supabase
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
-        full_name: fullName, // Se pasa como metadato al trigger de la DB
+        username: fullName, // Este dato es capturado por el trigger
       },
     },
   });
 
   if (error) {
-    console.error('Error de registro:', error);
+    console.error('Registration Error:', error);
     return res.status(400).json({ error: error.message });
   }
 
-  // El trigger de la DB se encarga de crear el perfil
+  // El trigger de la base de datos se encarga del resto
   res.status(201).json({
-    message: 'Usuario registrado exitosamente. Verifica tu email para la confirmación.',
+    message: 'User registered successfully! Profile created.',
     user: data.user,
   });
 };

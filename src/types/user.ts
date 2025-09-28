@@ -1,7 +1,7 @@
-export type UserRole = 'admin' | 'customer';
+export type UserRole = 'admin' | 'seller' | 'customer';
 
 export interface RegisterUserInput {
-  name: string;
+  full_name: string;
   email: string;
   password: string;
   role?: UserRole;

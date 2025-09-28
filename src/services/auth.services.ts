@@ -5,10 +5,10 @@ import { signToken } from '../utils/jwt';
 
 // REGISTRO DE USUARIO
 export async function tryRegisterUser(registerData: RegisterUserInput) {
-  const { name, email, password } = registerData;
+  const { full_name, email, password } = registerData;
 
   const { data: existingUser, error: fetchError } = await supabase
-    .from('user')
+    .from('users')
     .select('id')
     .eq('email', email)
     .single();
@@ -24,9 +24,9 @@ export async function tryRegisterUser(registerData: RegisterUserInput) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const { data: newUser, error: insertError } = await supabase
-    .from('user')
-    .insert([{ name, email, password: hashedPassword, role: 'customer' }])
-    .select('id, name, email, role')
+    .from('users')
+    .insert([{ full_name, email, password: hashedPassword, role: 'customer' }])
+    .select('id, full_name, email, role')
     .single();
 
   if (insertError) {
@@ -36,8 +36,9 @@ export async function tryRegisterUser(registerData: RegisterUserInput) {
   return newUser;
 }
 
+//LOGIN DE USUARIO
 export async function tryLoginUser(email: string, password: string) {
-  const { data: user, error } = await supabase.from('user').select('*').eq('email', email).single();
+  const { data: user, error } = await supabase.from('users').select('*').eq('email', email).single();
 
   if (error || !user) {
     throw new Error('Error buscando al usuario con ese email.');

@@ -5,12 +5,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 
-// export interface AuthenticatedRequest extends Request {
-//   user?: {
-//     id: string;
-//     role: 'admin' | 'customer';
-//   };
-// }
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    role: 'admin' | 'seller' | 'customer';
+  };
+}
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
